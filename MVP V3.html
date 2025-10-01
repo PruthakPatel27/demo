@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>goBarberly – Business Management Tool (Updated)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    :root{
+      --indigo-500:#667eea; --purple-500:#764ba2; --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0; --slate-400:#94a3b8; --slate-500:#64748b; --slate-700:#334155; --blue-600:#2563eb; --green-500:#10b981; --amber-500:#f59e0b; --red-500:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,sans-serif;background:var(--slate-50);color:var(--slate-700)}
+    .app{display:flex;min-height:100vh}
+    .sidebar{width:280px;background:#fff;border-right:1px solid var(--slate-200);position:fixed;inset:0 auto 0 0;overflow:auto;z-index:10}
+    .sidebar-header{padding:1.5rem;background:linear-gradient(135deg,var(--indigo-500),var(--purple-500));color:#fff}
+    .logo{display:flex;gap:.6rem;align-items:center}
+    .logo .icon{font-size:1.4rem}
+    .logo .text{font-size:1.4rem;font-weight:700}
+    .nav{padding:.75rem}
+    .nav-item{display:flex;gap:.75rem;align-items:center;padding:.65rem .9rem;margin:.25rem 0;border-radius:.5rem;color:var(--slate-500);cursor:pointer}
+    .nav-item:hover{background:var(--slate-100);color:var(--blue-600)}
+    .nav-item.active{background:linear-gradient(135deg,var(--indigo-500),var(--purple-500));color:#fff}
+    .nav-item .ni{width:1.5rem;text-align:center}
+    .main{flex:1;margin-left:280px}
+    .header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--slate-200);padding:1rem 1.5rem;z-index:5;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+    .titles h1{margin:0;font-weight:700}
+    .titles p{margin:0;color:var(--slate-500)}
+    .toolbar{display:flex;gap:.5rem;align-items:center}
+    .select,.input,.btn{border:1px solid #d1d5db;border-radius:.5rem;background:#fff;font-size:.9rem}
+    .select,.input{padding:.45rem .6rem}
+    .btn{padding:.55rem .9rem;display:inline-flex;gap:.5rem;align-items:center;font-weight:600;cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg,var(--indigo-500),var(--purple-500));color:#fff;border:none}
+    .btn.ghost{background:#fff}
+    .content{padding:1.25rem}
+    .grid{display:grid;gap:1rem}
+    .stats{grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:1rem}
+    .card{background:#fff;border:1px solid var(--slate-200);border-radius:.75rem;box-shadow:0 1px 3px rgba(0,0,0,.06);padding:1rem}
+    .card h3{margin:0 0 .5rem 0}
+    .stat-title{font-size:.8rem;color:var(--slate-500);letter-spacing:.04em;text-transform:uppercase}
+    .stat-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+    .stat-value{font-size:1.8rem;font-weight:700}
+    .muted{color:var(--slate-500);font-size:.9rem}
+    .charts{grid-template-columns:repeat(auto-fit,minmax(360px,1fr))}
+    .chartwrap{height:380px}
+    .actions{grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+    .action{padding:1rem;text-align:center;border-radius:.75rem;border:1px solid var(--slate-200);cursor:pointer}
+    .action:hover{box-shadow:0 8px 16px rgba(0,0,0,.08);transform:translateY(-1px)}
+    .table{overflow:hidden;border-radius:.75rem;border:1px solid var(--slate-200)}
+    .table .th{background:var(--slate-100);font-weight:600}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:.9rem;border-bottom:1px solid var(--slate-100);text-align:left}
+    tr:hover{background:var(--slate-50)}
+    .badge{display:inline-flex;align-items:center;border-radius:999px;padding:.2rem .6rem;font-size:.75rem;font-weight:600}
+    .success{background:#dcfce7;color:#166534}
+    .warn{background:#fef3c7;color:#92400e}
+    .danger{background:#fee2e2;color:#991b1b}
+    .info{background:#dbeafe;color:#1e40af}
+    .flex{display:flex;gap:.5rem;align-items:center}
+    .between{display:flex;justify-content:space-between;align-items:center}
+    .schedule-grid{display:grid;grid-template-columns:120px repeat(7,1fr);gap:.5rem}
+    .slot{padding:.5rem;text-align:center;border:1px solid var(--slate-200);border-radius:.4rem;background:var(--slate-50);font-size:.85rem}
+    .slot.header{background:linear-gradient(135deg,var(--indigo-500),var(--purple-500));color:#fff;font-weight:700}
+    .slot.booked{background:var(--green-500);color:#fff;cursor:pointer}
+    .slot.available:hover{background:#e0e7ff;cursor:pointer}
+    .slot.off{background:#fff0f0;color:#991b1b}
+    .weekbar{display:flex;gap:.5rem;align-items:center;justify-content:center;margin:.75rem 0;padding:.5rem;border:1px solid var(--slate-200);border-radius:.5rem;background:var(--slate-50)}
+    .btn.week{background:var(--indigo-500);color:#fff;border:none}
+    .pill{display:inline-flex;gap:.35rem;align-items:center;padding:.35rem .6rem;border:1px solid var(--slate-200);border-radius:999px;font-size:.8rem}
+    .kicker{font-size:.85rem;color:var(--slate-500)}
+    @media(max-width:860px){.sidebar{transform:translateX(-100%);transition:transform .25s}.sidebar.open{transform:translateX(0)}.main{margin-left:0}.schedule-grid{grid-template-columns:90px repeat(7,1fr)}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="logo"><span class="icon">💇</span><span class="text">goBarberly</span></div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showSection(this,'dashboard')"><span class="ni">📊</span><span>Dashboard</span></div>
+      <div class="nav-item" onclick="showSection(this,'appointments')"><span class="ni">📅</span><span>Appointments</span></div>
+      <div class="nav-item" onclick="showSection(this,'sales')"><span class="ni">💰</span><span>Sales</span></div>
+      <div class="nav-item" onclick="showSection(this,'staff')"><span class="ni">👥</span><span>Staff</span></div>
+      <div class="nav-item" onclick="showSection(this,'inventory')"><span class="ni">📦</span><span>Inventory</span></div>
+      <div class="nav-item" onclick="showSection(this,'customers')"><span class="ni">👤</span><span>Customers</span></div>
+      <div class="nav-item" onclick="showSection(this,'reports')"><span class="ni">📈</span><span>Reports</span></div>
+      <div class="nav-item" onclick="showSection(this,'history')"><span class="ni">📋</span><span>History</span></div>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="header">
+      <div class="titles">
+        <h1 id="pageTitle">Dashboard</h1>
+        <p id="pageSubtitle">Welcome to your barbershop management system</p>
+      </div>
+      <div class="toolbar">
+        <select class="select" id="globalRange">
+          <option value="today">Today</option>
+          <option value="week">This Week</option>
+          <option value="month" selected>This Month</option>
+          <option value="fy">This FY</option>
+          <option value="custom">Custom…</option>
+        </select>
+        <input class="input" type="date" id="rangeStart" style="display:none"/>
+        <input class="input" type="date" id="rangeEnd" style="display:none"/>
+        <button class="btn" id="applyRangeBtn" style="display:none">Apply</button>
+        <button class="btn ghost" id="exportBtn" title="Export CSV of what you’re viewing">⬇️ Export CSV</button>
+      </div>
+    </header>
+
+    <section class="content">
+      <!-- DASHBOARD -->
+      <section id="dashboard" class="section">
+        <div class="grid stats">
+          <div class="card">
+            <div class="stat-row">
+              <div class="stat-title">Total Revenue</div>
+              <div class="pill">₹ <span id="currencyCode">INR</span></div>
+            </div>
+            <div class="stat-value">₹<span id="revenueValue">0</span></div>
+            <div class="kicker" id="revenueKicker">Sum of paid sales in range</div>
+          </div>
+
+          <div class="card">
+            <div class="stat-row"><div class="stat-title">Total Sales (Txns)</div></div>
+            <div class="stat-value" id="salesCountValue">0</div>
+            <div class="kicker"># of transactions in range</div>
+          </div>
+
+          <div class="card">
+            <div class="stat-row"><div class="stat-title">Total Appointments</div></div>
+            <div class="stat-value" id="appointmentValue">0</div>
+            <div class="kicker" id="appointmentDetails">—</div>
+          </div>
+
+          <div class="card">
+            <div class="between">
+              <div class="stat-title">Customer Satisfaction</div>
+              <select class="select" id="satisfactionFilter">
+                <option value="overall">Overall</option>
+                <option value="top5" selected>Top 5 Barbers</option>
+              </select>
+            </div>
+            <div class="stat-value" id="satisfactionValue"></div>
+            <div class="kicker" id="satisfactionDetails"></div>
+            <div class="chartwrap" id="top5ChartWrap" style="display:none"><canvas id="top5BarbersChart"></canvas></div>
+          </div>
+        </div>
+
+        <div class="grid actions" style="margin:.5rem 0 1rem;">
+          <div class="action" onclick="openModal('appointmentModal')">📅<div><strong>New Appointment</strong></div></div>
+          <div class="action" onclick="document.querySelector('#saleModal h3').textContent='Record Sale'; document.getElementById('saleId').value=''; openModal('saleModal')">💰<div><strong>Record Sale</strong></div></div>
+          <div class="action" onclick="showSection(document.querySelector('.nav-item:nth-child(4)'),'staff')">👥<div><strong>Manage Staff</strong></div></div>
+          <div class="action" onclick="showSection(document.querySelector('.nav-item:nth-child(7)'),'reports')">📊<div><strong>View Reports</strong></div></div>
+        </div>
+
+        <div class="grid charts">
+          <div class="card chartwrap">
+            <h3>Appointments by Service</h3>
+            <canvas id="serviceChart"></canvas>
+          </div>
+          <div class="card chartwrap">
+            <h3>Appointments by Barber</h3>
+            <canvas id="barberChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card chartwrap">
+          <h3>Weekly Sales Trend</h3>
+          <canvas id="salesTrendChart"></canvas>
+        </div>
+      </section>
+
+      <!-- APPOINTMENTS -->
+      <section id="appointments" class="section" style="display:none">
+        <div class="table">
+          <div class="between" style="padding:1rem;border-bottom:1px solid var(--slate-200)">
+            <h3 style="margin:0">Appointment Management</h3>
+            <div class="flex">
+              <label class="kicker">Show</label>
+              <select class="select" id="barberFilter">
+                <option value="ALL">All Barbers</option>
+              </select>
+              <button class="btn primary" onclick="openModal('appointmentModal')">+ New Appointment</button>
+            </div>
+          </div>
+          <table id="appointmentsTable">
+            <thead class="th"><tr>
+              <th>Time</th><th>Customer</th><th>Service</th><th>Barber</th><th>Status</th><th>Actions</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin-top:1rem">
+          <div class="between">
+            <h3 style="margin:0">Weekly Schedule</h3>
+            <div class="flex">
+              <div class="kicker">Week:</div>
+              <button class="btn week" onclick="changeWeek(-1)">← Prev</button>
+              <div class="pill" id="currentWeekDisplay">—</div>
+              <button class="btn week" onclick="changeWeek(1)">Next →</button>
+            </div>
+          </div>
+          <div class="schedule-grid" id="scheduleGrid"></div>
+        </div>
+      </section>
+
+      <!-- SALES -->
+      <section id="sales" class="section" style="display:none">
+        <div class="grid stats">
+          <div class="card"><div class="stat-title">Today's Sales</div><div class="stat-value">₹<span id="todaySales">0</span></div></div>
+          <div class="card"><div class="stat-title">This Week</div><div class="stat-value">₹<span id="weekSales">0</span></div></div>
+          <div class="card"><div class="stat-title">This Month</div><div class="stat-value">₹<span id="monthSales">0</span></div></div>
+        </div>
+        <div class="table">
+          <div class="between" style="padding:1rem;border-bottom:1px solid var(--slate-200)">
+            <h3 style="margin:0">Sales & Transactions</h3>
+            <button class="btn primary" onclick="document.querySelector('#saleModal h3').textContent='Record Sale'; document.getElementById('saleId').value=''; openModal('saleModal')">+ Record Sale</button>
+          </div>
+          <table id="salesTable">
+            <thead class="th"><tr>
+              <th>Date</th><th>Customer</th><th>Service</th><th>Barber</th><th>Amount</th><th>Payment</th>
+            <th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- STAFF -->
+      <section id="staff" class="section" style="display:none">
+        <div class="table">
+          <div class="between" style="padding:1rem;border-bottom:1px solid var(--slate-200)">
+            <h3 style="margin:0">Staff Management</h3>
+            <button class="btn primary" onclick="document.querySelector('#staffModal h3').textContent='Add Staff Member'; document.getElementById('staffIndex').value=''; presetAvailabilityFromSchedule(''); openModal('staffModal')">+ Add Staff Member</button>
+          </div>
+          <table id="staffTable">
+            <thead class="th"><tr>
+              <th>Name</th><th>Role</th><th>Phone</th><th>Schedule</th><th>Status</th>
+            <th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="card" style="margin-top:1rem">
+          <div class="between">
+            <h3 style="margin:0">Barber Availability</h3>
+            <div class="flex">
+              <select class="select" id="staffAvailabilityRange">
+                <option value="week" selected>This Week</option>
+                <option value="custom">Custom Range</option>
+              </select>
+              <input type="date" class="input" id="staffRangeStart" style="display:none"/>
+              <input type="date" class="input" id="staffRangeEnd" style="display:none"/>
+              <button class="btn" id="applyStaffRange" style="display:none">Apply</button>
+            </div>
+          </div>
+          <div class="kicker">Shows who is working & when (by declared schedules & overrides)</div>
+          <div class="schedule-grid" id="staffAvailabilityGrid" style="margin-top:.5rem"></div>
+        </div>
+      </section>
+
+      <!-- INVENTORY -->
+      <section id="inventory" class="section" style="display:none">
+        <div class="table">
+          <div class="between" style="padding:1rem;border-bottom:1px solid var(--slate-200)">
+            <h3 style="margin:0">Inventory Management</h3>
+            <button class="btn primary" onclick="document.querySelector('#inventoryModal h3').textContent='Add Inventory Item'; document.getElementById('inventoryIndex').value=''; openModal('inventoryModal')">+ Add Item</button>
+          </div>
+          <table id="inventoryTable">
+            <thead class="th"><tr>
+              <th>Item</th><th>Category</th><th>Qty</th><th>Min</th><th>Status</th>
+            <th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- CUSTOMERS -->
+      <section id="customers" class="section" style="display:none">
+        <div class="table">
+          <div class="between" style="padding:1rem;border-bottom:1px solid var(--slate-200)">
+            <h3 style="margin:0">Customer Management</h3>
+            <button class="btn primary" onclick="document.querySelector('#customerModal h3').textContent='Add Customer'; document.getElementById('customerIndex').value=''; openModal('customerModal')">+ Add Customer</button>
+          </div>
+          <table id="customersTable">
+            <thead class="th"><tr>
+              <th>Name</th><th>Phone</th><th>Email</th><th>Visits</th><th>Last Visit</th>
+            <th>Actions</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- REPORTS -->
+      <section id="reports" class="section" style="display:none">
+        <div class="grid stats">
+          <div class="card"><div class="stat-title">Monthly Revenue</div><div class="stat-value">₹<span id="monthlyRevenue">0</span></div></div>
+          <div class="card"><div class="stat-title">Top Service</div><div class="stat-value" id="topService">—</div><div class="kicker" id="topServiceKicker"></div></div>
+          <div class="card"><div class="stat-title">Top Barber</div><div class="stat-value" id="topBarber">—</div><div class="kicker" id="topBarberKicker"></div></div>
+          <div class="card"><div class="stat-title">Average Ticket</div><div class="stat-value" id="avgTicket">—</div></div>
+        </div>
+        <div class="card chartwrap" style="max-width:560px">
+          <h3>Service Distribution</h3>
+          <canvas id="serviceDistributionChart"></canvas>
+        </div>
+      </section>
+
+      <!-- HISTORY -->
+      <section id="history" class="section" style="display:none">
+        <div class="table">
+          <div class="between" style="padding:1rem;border-bottom:1px solid var(--slate-200)">
+            <h3 style="margin:0">System History & Audit Log</h3>
+            <select class="select" id="historyFilter">
+              <option value="all">All Activities</option>
+              <option value="appointments">Appointments</option>
+              <option value="sales">Sales</option>
+              <option value="staff">Staff</option>
+              <option value="inventory">Inventory</option>
+              <option value="customers">Customers</option>
+            </select>
+          </div>
+          <table id="historyTable">
+            <thead class="th"><tr>
+              <th>Date & Time</th><th>Action</th><th>Section</th><th>Details</th><th>User</th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+
+<!-- Modals -->
+<div id="appointmentModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:20">
+  <div class="card" style="max-width:520px;width:92%;position:relative">
+    <div class="between"><h3 id="appointmentModalTitle">New Appointment</h3>
+      <button class="btn" onclick="closeModal('appointmentModal')">✕</button></div>
+    <form onsubmit="saveAppointment(event)" style="margin-top:.5rem">
+      <input type="hidden" id="appointmentId"/>
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:.75rem">
+        <label>Customer<input class="input" id="appointmentCustomer" required/></label>
+        <label>Phone<input class="input" id="appointmentPhone" required/></label>
+        <label class="full">Service
+          <select class="input" id="appointmentService" required>
+            <option value="">Select Service</option>
+            <option value="Haircut" data-price="300">Haircut - ₹300</option>
+            <option value="Beard Trim" data-price="200">Beard Trim - ₹200</option>
+            <option value="Hair + Beard" data-price="450">Hair + Beard - ₹450</option>
+            <option value="Shave" data-price="250">Shave - ₹250</option>
+            <option value="Hair Color" data-price="500">Hair Color - ₹500</option>
+          </select>
+        </label>
+        <label>Barber
+          <select class="input" id="appointmentBarber" required><option value="">Select Barber</option></select>
+        </label>
+        <label>Date<input class="input" type="date" id="appointmentDate" required/></label>
+        <label>Time<input class="input" type="time" id="appointmentTime" required/></label>
+        <label class="full" id="appointmentStatusGroup" style="display:none">Status
+          <select class="input" id="appointmentStatus">
+            <option>Confirmed</option><option>Pending</option><option>Cancelled</option>
+          </select>
+        </label>
+      </div>
+      <div class="between" style="margin-top:1rem">
+        <div></div>
+        <button id="appointmentSubmitBtn" class="btn primary">Save Appointment</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Appointment Details Modal -->
+<div id="appointmentDetailsModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:25">
+  <div class="card" style="max-width:520px;width:92%">
+    <div class="between"><h3>Appointment Details</h3><button class="btn" onclick="closeModal('appointmentDetailsModal')">✕</button></div>
+    <div id="appointmentDetailsBody" style="margin-top:.5rem"></div>
+    <div class="between" style="margin-top:1rem">
+      <div></div>
+      <button class="btn primary" id="appointmentDetailsEditBtn">Edit</button>
+    </div>
+  </div>
+</div>
+
+<div id="saleModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:20">
+  <div class="card" style="max-width:520px;width:92%">
+    <div class="between"><h3>Record Sale</h3><button class="btn" onclick="closeModal('saleModal')">✕</button></div>
+    <form onsubmit="saveSale(event)" style="margin-top:.5rem"><input type="hidden" id="saleId">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:.75rem">
+        <label>Customer<input class="input" id="saleCustomer" required/></label>
+        <label>Service
+          <select class="input" id="saleService" onchange="updateSaleAmount()" required>
+            <option value="">Select Service</option>
+            <option value="Haircut" data-price="300">Haircut - ₹300</option>
+            <option value="Beard Trim" data-price="200">Beard Trim - ₹200</option>
+            <option value="Hair + Beard" data-price="450">Hair + Beard - ₹450</option>
+            <option value="Shave" data-price="250">Shave - ₹250</option>
+            <option value="Hair Color" data-price="500">Hair Color - ₹500</option>
+          </select>
+        </label>
+        <label>Barber
+          <select class="input" id="saleBarber" required><option value="">Select Barber</option></select>
+        </label>
+        <label>Amount (₹)<input class="input" type="number" id="saleAmount" step="1" required/></label>
+        <label class="full">Payment
+          <select class="input" id="salePayment" required>
+            <option>Cash</option><option>UPI</option><option>Card</option><option>Paytm</option>
+          </select>
+        </label>
+      </div>
+      <div class="between" style="margin-top:1rem"><div></div><button class="btn primary">Record Sale</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- UPDATED: Add Staff Member modal with date + days + time -->
+<div id="staffModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:20">
+  <div class="card" style="max-width:560px;width:92%">
+    <div class="between"><h3>Add Staff Member</h3><button class="btn" onclick="closeModal('staffModal')">✕</button></div>
+    <form onsubmit="saveStaff(event)" style="margin-top:.5rem"><input type="hidden" id="staffIndex">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:.75rem">
+        <label>Name<input class="input" id="staffName" required/></label>
+        <label>Role
+          <select class="input" id="staffRole" required>
+            <option>Barber</option><option>Senior Barber</option><option>Manager</option><option>Receptionist</option>
+          </select>
+        </label>
+        <label>Phone<input class="input" id="staffPhone" required/></label>
+        <label>Email<input class="input" type="email" id="staffEmail" required/></label>
+        <label class="full">Schedule label (optional)
+          <input class="input" id="staffSchedulePreview" placeholder="e.g., Mon-Fri 09:00-18:00"/>
+        </label>
+        <div class="full" style="margin-top:.25rem">
+          <div class="kicker" style="margin-bottom:.25rem">Add initial availability</div>
+          <div class="grid" style="grid-template-columns:repeat(4,1fr);gap:.5rem">
+            <label class="full">Start date<input type="date" class="input" id="initAvailStartDate"></label>
+            <label class="full">End date<input type="date" class="input" id="initAvailEndDate"></label>
+            <label class="full">Start time<input type="time" class="input" id="initAvailStartTime" value="09:00"></label>
+            <label class="full">End time<input type="time" class="input" id="initAvailEndTime" value="18:00"></label>
+          </div>
+          <div class="grid" style="grid-template-columns:repeat(7,1fr);gap:.35rem;margin-top:.5rem">
+            <label><input type="checkbox" class="dayChk" value="Mon"> Mon</label>
+            <label><input type="checkbox" class="dayChk" value="Tue"> Tue</label>
+            <label><input type="checkbox" class="dayChk" value="Wed"> Wed</label>
+            <label><input type="checkbox" class="dayChk" value="Thu"> Thu</label>
+            <label><input type="checkbox" class="dayChk" value="Fri"> Fri</label>
+            <label><input type="checkbox" class="dayChk" value="Sat"> Sat</label>
+            <label><input type="checkbox" class="dayChk" value="Sun"> Sun</label>
+          </div>
+          <div class="kicker" style="margin-top:.25rem">We'll add availability overrides for selected days between the dates.</div>
+        </div>
+      </div>
+      <div class="between" style="margin-top:1rem"><div></div><button class="btn primary">Add Staff Member</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="inventoryModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:20">
+  <div class="card" style="max-width:520px;width:92%">
+    <div class="between"><h3>Add Inventory Item</h3><button class="btn" onclick="closeModal('inventoryModal')">✕</button></div>
+    <form onsubmit="saveInventory(event)" style="margin-top:.5rem"><input type="hidden" id="inventoryIndex">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:.75rem">
+        <label>Item<input class="input" id="inventoryName" required/></label>
+        <label>Category
+          <select class="input" id="inventoryCategory" required>
+            <option>Hair Products</option><option>Shaving</option><option>Tools</option><option>Cleaning</option><option>Other</option>
+          </select>
+        </label>
+        <label>Quantity<input class="input" type="number" id="inventoryQuantity" required/></label>
+        <label>Minimum Stock<input class="input" type="number" id="inventoryMinStock" required/></label>
+      </div>
+      <div class="between" style="margin-top:1rem"><div></div><button class="btn primary">Add Item</button></div>
+    </form>
+  </div>
+</div>
+
+<div id="customerModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:20">
+  <div class="card" style="max-width:520px;width:92%">
+    <div class="between"><h3>Add Customer</h3><button class="btn" onclick="closeModal('customerModal')">✕</button></div>
+    <form onsubmit="saveCustomer(event)" style="margin-top:.5rem"><input type="hidden" id="customerIndex">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:.75rem">
+        <label>Name<input class="input" id="customerName" required/></label>
+        <label>Phone<input class="input" id="customerPhone" required/></label>
+        <label class="full">Email<input class="input" type="email" id="customerEmail"/></label>
+        <label class="full">Notes<textarea class="input" id="customerNotes" rows="3" placeholder="Preferred styles, allergies, etc."></textarea></label>
+      </div>
+      <div class="between" style="margin-top:1rem"><div></div><button class="btn primary">Add Customer</button></div>
+    </form>
+  </div>
+</div>
+
+<!-- NEW: Barber Availability Modal (per-date) -->
+<div id="availabilityModal" class="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:30">
+  <div class="card" style="max-width:520px;width:92%">
+    <div class="between"><h3>Add Barber Availability</h3><button class="btn" onclick="closeModal('availabilityModal')">✕</button></div>
+    <form onsubmit="saveAvailability(event)" style="margin-top:.5rem">
+      <input type="hidden" id="availabilityId"/>
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:.75rem">
+        <label>Barber
+          <select class="input" id="availabilityBarber" required></select>
+        </label>
+        <label>Date<input type="date" class="input" id="availabilityDate" required/></label>
+        <label>Start Time<input type="time" class="input" id="availabilityStart" value="09:00" required/></label>
+        <label>End Time<input type="time" class="input" id="availabilityEnd" value="18:00" required/></label>
+      </div>
+      <div class="between" style="margin-top:1rem"><div></div><button class="btn primary">Save Availability</button></div>
+    </form>
+  </div>
+</div>
+
+<script>
+// ---------- Organization Settings ----------
+const ORG = { currencySymbol:'₹', currencyCode:'INR', timezone:'Asia/Kolkata', fyStartMonth:4, fyStartDay:1, openHour:9, closeHour:19, slotMinutes:30 };
+
+// ---------- Persistence ----------
+function saveData(){ localStorage.setItem('barbershopData', JSON.stringify(data)); }
+function loadData(){ try{ const raw = localStorage.getItem('barbershopData'); if(raw){ data = JSON.parse(raw); } }catch(e){ console.warn('Load failed', e); } }
+
+// ---------- Data (seed) ----------
+let data = {
+  appointments: [
+    { id: 1, customer: 'Arjun Sharma', phone: '9876543210', service: 'Haircut', barber: 'Rajesh Kumar', date: '2025-08-17', time: '09:00', status: 'Confirmed' },
+    { id: 2, customer: 'Priya Singh', phone: '9876543211', service: 'Hair Color', barber: 'Suresh Patel', date: '2025-08-17', time: '10:30', status: 'Confirmed' }
+  ],
+  sales: [
+    { id: 1, date: '2025-08-12T09:45:00', customer: 'Arjun Sharma', service: 'Haircut', barber: 'Rajesh Kumar', amount: 300, payment: 'UPI' }
+  ],
+  staff: [
+    { name: 'Rajesh Kumar', role: 'Senior Barber', phone: '9876543201', email: 'rajesh@barbershop.com', schedule: 'Mon-Fri 9AM-6PM', status: 'Active' },
+    { name: 'Suresh Patel', role: 'Barber',        phone: '9876543202', email: 'suresh@barbershop.com', schedule: 'Tue-Sat 10AM-7PM', status: 'Active' }
+  ],
+  inventory: [ { name: 'Hair Gel', category: 'Hair Products', quantity: 25, minStock: 10 } ],
+  customers: [ { name: 'Arjun Sharma', phone: '9876543210', email: 'arjun@email.com', visits: 12, lastVisit: '2025-08-12', notes: 'Prefers fade cuts' } ],
+  staffOverrides: [],
+  history: []
+};
+
+// ---------- State ----------
+let charts = {}; let currentWeekOffset = 0;
+const rangeState = { type:'month', start:null, end:null };
+
+// ---------- Utils ----------
+function pad(n){return n<10?'0'+n:n}
+function to12h(h,m=0){ const ampm = h>=12?'PM':'AM'; const hh = ((h+11)%12)+1; return `${hh}:${pad(m)} ${ampm}`; }
+function fmtTimeString24To12(s){ if(!s) return s; const [h,m] = s.split(':').map(Number); return to12h(h,m); }
+function fmtDate(d){ const dt = (d instanceof Date)?d:new Date(d); return dt.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+function fyRangeForDate(now=new Date()){ const fyStart = new Date(now.getFullYear(), ORG.fyStartMonth-1, ORG.fyStartDay); const inThisFY = now >= fyStart; const s = inThisFY ? fyStart : new Date(now.getFullYear()-1, ORG.fyStartMonth-1, ORG.fyStartDay); const e = new Date(s); e.setFullYear(s.getFullYear()+1); e.setMilliseconds(-1); return {start:s,end:e}; }
+function computeRange(type){ const now = new Date(); if(type==='today'){ const s = new Date(now); s.setHours(0,0,0,0); const e = new Date(now); e.setHours(23,59,59,999); return {start:s,end:e}; } if(type==='week'){ const s = new Date(now); s.setDate(now.getDate()-now.getDay()); s.setHours(0,0,0,0); const e = new Date(s); e.setDate(s.getDate()+6); e.setHours(23,59,59,999); return {start:s,end:e}; } if(type==='month'){ const s = new Date(now.getFullYear(), now.getMonth(), 1); const e = new Date(now.getFullYear(), now.getMonth()+1, 0, 23,59,59,999); return {start:s,end:e}; } if(type==='fy'){ return fyRangeForDate(now);} return {start:null,end:null}; }
+function inRange(dateLike,start,end){ const d = (dateLike instanceof Date)?dateLike:new Date(dateLike); return (!start || d>=start) && (!end || d<=end); }
+
+// ---------- Navigation ----------
+function showSection(el, id){ document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); if(el) el.classList.add('active'); document.querySelectorAll('.section').forEach(s=>s.style.display='none'); document.getElementById(id).style.display='block'; const titles = {dashboard:'Dashboard',appointments:'Appointments',sales:'Sales',staff:'Staff',inventory:'Inventory',customers:'Customers',reports:'Reports',history:'History'}; const subs = { dashboard:'Welcome to your barbershop management system', appointments:'Manage your daily appointments and schedule', sales:'Track sales and revenue performance', staff:'Manage your team and staff schedules', inventory:'Monitor stock levels and supplies', customers:'Manage customer relationships and history', reports:'Analyze performance and generate reports', history:'System activity log and audit trail' }; document.getElementById('pageTitle').textContent = titles[id]; document.getElementById('pageSubtitle').textContent = subs[id]; updateAllTables(); if(id==='appointments'){ generateScheduleGrid(); } if(id==='staff'){ renderStaffAvailability(); } }
+
+// ---------- Global Range Controls ----------
+function setGlobalRange(type){ rangeState.type = type; if(type!=='custom'){ const {start,end} = computeRange(type); rangeState.start=start; rangeState.end=end; document.getElementById('rangeStart').style.display='none'; document.getElementById('rangeEnd').style.display='none'; document.getElementById('applyRangeBtn').style.display='none'; refreshDashboardForRange(); } else { document.getElementById('rangeStart').style.display='inline-block'; document.getElementById('rangeEnd').style.display='inline-block'; document.getElementById('applyRangeBtn').style.display='inline-flex'; } }
+function refreshDashboardForRange(){ updateRevenueFromSales(); updateSalesCount(); updateAppointmentsKpis(); updateCharts(); updateSalesStats(); updateAllTables(); }
+
+// ---------- Charts ----------
+function destroyCharts(){ Object.values(charts).forEach(c=>{try{c.destroy()}catch{}}); charts={}; }
+function updateCharts(){ destroyCharts(); const appts = data.appointments.filter(a=> inRange(new Date(a.date+'T'+a.time), rangeState.start, rangeState.end)); const byService = {}; const byBarber = {}; appts.forEach(a=>{ byService[a.service]=(byService[a.service]||0)+1; byBarber[a.barber]=(byBarber[a.barber]||0)+1; }); const serviceCtx = document.getElementById('serviceChart').getContext('2d'); charts.serviceChart = new Chart(serviceCtx,{ type:'bar', data:{labels:Object.keys(byService),datasets:[{data:Object.values(byService),backgroundColor:'#667eea',borderRadius:4}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}} }); const barberCtx = document.getElementById('barberChart').getContext('2d'); charts.barberChart = new Chart(barberCtx,{ type:'bar', data:{labels:Object.keys(byBarber),datasets:[{data:Object.values(byBarber),backgroundColor:'#10b981',borderRadius:4}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}} }); const salesInRange = data.sales.filter(s=> inRange(new Date(s.date), rangeState.start, rangeState.end)); const weekday = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; const totals = [0,0,0,0,0,0,0]; salesInRange.forEach(s=>{ totals[new Date(s.date).getDay()] += Number(s.amount) || 0; }); const salesCtx = document.getElementById('salesTrendChart').getContext('2d'); charts.salesTrendChart = new Chart(salesCtx,{ type:'line', data:{labels:weekday,datasets:[{label:'Sales (₹)',data:totals,borderColor:'#ef4444',backgroundColor:'rgba(239,68,68,.1)',tension:.4,fill:true}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}} }); const distCtx = document.getElementById('serviceDistributionChart'); if(distCtx){ const svcNames = Object.keys(byService); const svcVals = Object.values(byService); charts.serviceDistributionChart = new Chart(distCtx.getContext('2d'),{ type:'doughnut', data:{labels:svcNames,datasets:[{data:svcVals,backgroundColor:['#667eea','#ef4444','#10b981','#f59e0b','#8b5cf6','#22c55e','#06b6d4']}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{usePointStyle:true}}}} }); } }
+
+// ---------- Dashboard KPIs ----------
+function updateRevenueFromSales(){ const sum = data.sales.filter(s=> inRange(new Date(s.date), rangeState.start, rangeState.end)).reduce((acc,s)=> acc + (Number(s.amount)||0), 0); document.getElementById('revenueValue').textContent = sum.toLocaleString(); document.getElementById('currencyCode').textContent = ORG.currencyCode; }
+function updateSalesCount(){ const count = data.sales.filter(s=> inRange(new Date(s.date), rangeState.start, rangeState.end)).length; document.getElementById('salesCountValue').textContent = count.toString(); }
+function updateAppointmentsKpis(){ const appts = data.appointments.filter(a=> inRange(new Date(a.date+'T'+a.time), rangeState.start, rangeState.end)); const total = appts.length; const completed = appts.filter(a=>a.status==='Confirmed' || a.status==='Completed').length; const pending = appts.filter(a=>a.status==='Pending').length; const cancelled = appts.filter(a=>a.status==='Cancelled').length; document.getElementById('appointmentValue').textContent = total; document.getElementById('appointmentDetails').innerHTML = `<span style="color:#10b981">${completed} completed</span> • <span style="color:#f59e0b">${pending} pending</span> • <span style="color:#ef4444">${cancelled} cancelled</span>`; }
+
+// ---------- Tables ----------
+function updateAppointmentsTable(){ const tbody = document.querySelector('#appointmentsTable tbody'); if(!tbody) return; tbody.innerHTML=''; const barberSel = document.getElementById('barberFilter').value; const appts = data.appointments.filter(a=> inRange(new Date(a.date+'T'+a.time), rangeState.start, rangeState.end)).filter(a=> barberSel==='ALL' ? true : a.barber===barberSel).sort((a,b)=> new Date(a.date+'T'+a.time) - new Date(b.date+'T'+b.time)); appts.forEach(apt=>{ const tr=document.createElement('tr'); const badge = apt.status==='Confirmed'?'success': apt.status==='Pending'?'warn':'danger'; tr.innerHTML = `
+      <td>${fmtDate(apt.date)} ${fmtTimeString24To12(apt.time)}</td>
+      <td>${apt.customer}</td>
+      <td>${apt.service}</td>
+      <td>${apt.barber}</td>
+      <td><span class="badge ${badge}">${apt.status}</span></td>
+      <td class="flex">
+        <button class="btn" onclick="editAppointment(${apt.id})">Edit</button>
+        <button class="btn" onclick="openAppointmentDetails(${apt.id})">View</button>
+        <button class="btn" onclick="completeAppointment(${apt.id})">Complete</button>
+        <button class="btn" onclick="cancelAppointment(${apt.id})">Cancel</button>
+      </td>`; tbody.appendChild(tr); }); }
+function updateSalesTable(){ const tbody = document.querySelector('#salesTable tbody'); if(!tbody) return; tbody.innerHTML=''; const sales = data.sales.filter(s=> inRange(new Date(s.date), rangeState.start, rangeState.end)).sort((a,b)=> new Date(b.date)-new Date(a.date)); sales.forEach(s=>{ const d=new Date(s.date); const tr=document.createElement('tr'); tr.innerHTML=`
+      <td>${fmtDate(d)} ${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</td>
+      <td>${s.customer}</td>
+      <td>${s.service}</td>
+      <td>${s.barber}</td>
+      <td>${ORG.currencySymbol}${Number(s.amount).toFixed(0)}</td>
+      <td>${s.payment}</td>
+      <td>
+        <button class="btn" onclick="editSale(${s.id})">Edit</button>
+        <button class="btn danger" onclick="deleteSale(${s.id})">Delete</button>
+      </td>`; tbody.appendChild(tr); }); }
+function updateStaffTable(){ const tbody = document.querySelector('#staffTable tbody'); if(!tbody) return; tbody.innerHTML=''; data.staff.forEach((s, i)=>{ const tr=document.createElement('tr'); tr.innerHTML=`
+      <td>${s.name}</td>
+      <td>${s.role}</td>
+      <td>${s.phone}</td>
+      <td>${s.schedule||''}</td>
+      <td><span class="badge info">${s.status||'Active'}</span></td>
+      <td>
+        <button class="btn" onclick="editStaff(${i})">Edit</button>
+        <button class="btn danger" onclick="deleteStaff(${i})">Delete</button>
+      </td>`; tbody.appendChild(tr); }); }
+function updateInventoryTable(){ const tbody = document.querySelector('#inventoryTable tbody'); if(!tbody) return; tbody.innerHTML=''; data.inventory.forEach((i, idx)=>{ const status = i.quantity<=i.minStock ? '<span class="badge danger">Low</span>' : '<span class="badge success">OK</span>'; const tr=document.createElement('tr'); tr.innerHTML=`<td>${i.name}</td><td>${i.category}</td><td>${i.quantity}</td><td>${i.minStock}</td><td>${status}</td>
+<td>
+  <button class="btn" onclick="editInventory(${idx})">Edit</button>
+  <button class="btn danger" onclick="deleteInventory(${idx})">Delete</button>
+</td>`; tbody.appendChild(tr); }); }
+function updateCustomersTable(){ const tbody = document.querySelector('#customersTable tbody'); if(!tbody) return; tbody.innerHTML=''; data.customers.forEach((c, idx)=>{ const tr=document.createElement('tr'); tr.innerHTML=`<td>${c.name}</td><td>${c.phone}</td><td>${c.email||''}</td><td>${c.visits||0}</td><td>${fmtDate(c.lastVisit||new Date())}</td>
+<td>
+  <button class="btn" onclick="editCustomer(${idx})">Edit</button>
+  <button class="btn danger" onclick="deleteCustomer(${idx})">Delete</button>
+</td>`; tbody.appendChild(tr); }); }
+function updateHistoryTable(){ const tbody=document.querySelector('#historyTable tbody'); if(!tbody) return; const filter=document.getElementById('historyFilter').value; tbody.innerHTML=''; const list=(filter==='all'?data.history:data.history.filter(h=>h.section===filter)).slice(0,200); list.forEach(h=>{ const d=new Date(h.timestamp); const tr=document.createElement('tr'); tr.innerHTML=`
+      <td>${fmtDate(d)} ${d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'})}</td>
+      <td><span class="badge info">${h.action}</span></td>
+      <td><span class="badge">${h.section}</span></td>
+      <td>${h.details}</td>
+      <td>${h.user||'admin'}</td>`; tbody.appendChild(tr); }); }
+function updateAllTables(){ updateAppointmentsTable(); updateSalesTable(); updateStaffTable(); updateInventoryTable(); updateCustomersTable(); updateHistoryTable(); }
+
+// ---------- Appointments: schedule grid ----------
+function populateBarberFilter(){ const sel=document.getElementById('barberFilter'); sel.innerHTML='<option value="ALL">All Barbers</option>'; data.staff.filter(s=> /barber/i.test(s.role)).forEach(b=>{ const o=document.createElement('option'); o.value=b.name; o.textContent=b.name; sel.appendChild(o); }); sel.addEventListener('change', ()=>{ updateAppointmentsTable(); generateScheduleGrid(); }); }
+function changeWeek(delta){ currentWeekOffset+=delta; updateWeekDisplay(); generateScheduleGrid(); }
+function updateWeekDisplay(){ const today=new Date(); const base=new Date(today); base.setDate(today.getDate()+currentWeekOffset*7); const monday=new Date(base); monday.setDate(base.getDate()-base.getDay()+1); const sunday=new Date(monday); sunday.setDate(monday.getDate()+6); document.getElementById('currentWeekDisplay').textContent = `${monday.toLocaleDateString('en-US',{month:'short',day:'numeric'})} - ${sunday.toLocaleDateString('en-US',{month:'short',day:'numeric'})}, ${monday.getFullYear()}`; }
+function generateScheduleGrid(){ const grid=document.getElementById('scheduleGrid'); grid.innerHTML=''; const headers=['Time','Mon','Tue','Wed','Thu','Fri','Sat','Sun']; headers.forEach(h=>{ const div=document.createElement('div');div.className='slot header';div.textContent=h;grid.appendChild(div); }); const today=new Date(); const base=new Date(today); base.setDate(today.getDate()+currentWeekOffset*7); const monday=new Date(base); monday.setDate(base.getDate()-base.getDay()+1); const slots=[]; for(let h=ORG.openHour; h<ORG.closeHour; h++){ for(let m=0; m<60; m+=ORG.slotMinutes){ slots.push({h,m}); } } const barberSel=document.getElementById('barberFilter').value; slots.forEach(slot=>{ const label=document.createElement('div'); label.className='slot header'; label.textContent=to12h(slot.h,slot.m); grid.appendChild(label); for(let d=0; d<7; d++){ const cell=document.createElement('div'); cell.className='slot available'; const day=new Date(monday); day.setDate(monday.getDate()+d); const dateStr=day.toISOString().split('T')[0]; const t = `${pad(slot.h)}:${pad(slot.m)}`; const booked = data.appointments.find(a=> a.date===dateStr && a.time===t && (barberSel==='ALL' ? true : a.barber===barberSel)); if(booked){ cell.className='slot booked'; cell.textContent=`${booked.barber} • ${booked.customer}`; cell.title=`${booked.service}`; cell.onclick=()=> openAppointmentDetails(booked.id); } else { cell.textContent='Available'; cell.onclick=()=>{ document.getElementById('appointmentDate').value=dateStr; document.getElementById('appointmentTime').value=t; openModal('appointmentModal'); }; } grid.appendChild(cell); } }); }
+
+function openAppointmentDetails(id){ const apt = data.appointments.find(a=>a.id===id); if(!apt) return; const body = document.getElementById('appointmentDetailsBody'); body.innerHTML = `<div class="grid" style="grid-template-columns:1fr 1fr;gap:.5rem">
+    <div><div class="kicker">Customer</div><div><strong>${apt.customer}</strong></div></div>
+    <div><div class="kicker">Phone</div><div>${apt.phone}</div></div>
+    <div><div class="kicker">Service</div><div>${apt.service}</div></div>
+    <div><div class="kicker">Barber</div><div>${apt.barber}</div></div>
+    <div><div class="kicker">Date</div><div>${fmtDate(apt.date)}</div></div>
+    <div><div class="kicker">Time</div><div>${fmtTimeString24To12(apt.time)}</div></div>
+    <div><div class="kicker">Status</div><div>${apt.status}</div></div>
+  </div>`; const editBtn = document.getElementById('appointmentDetailsEditBtn'); editBtn.onclick = ()=>{ closeModal('appointmentDetailsModal'); editAppointment(id); }; openModal('appointmentDetailsModal'); }
+
+function editAppointment(id){ const a=data.appointments.find(x=>String(x.id)===String(id)); if(!a) return; document.getElementById('appointmentModalTitle').textContent='Edit Appointment'; document.getElementById('appointmentId').value=a.id; document.getElementById('appointmentCustomer').value=a.customer; document.getElementById('appointmentPhone').value=a.phone; document.getElementById('appointmentService').value=a.service; document.getElementById('appointmentBarber').value=a.barber; document.getElementById('appointmentDate').value=a.date; document.getElementById('appointmentTime').value=a.time; document.getElementById('appointmentStatusGroup').style.display='block'; document.getElementById('appointmentStatus').value=a.status; openModal('appointmentModal'); }
+function completeAppointment(id){ const a=data.appointments.find(x=>String(x.id)===String(id)); if(!a) return; a.status='Completed'; addToHistory('Completed','appointments',`#${id} ${a.customer}`); saveData(); updateAllTables(); generateScheduleGrid(); refreshDashboardForRange(); }
+function cancelAppointment(id){ const a=data.appointments.find(x=>String(x.id)===String(id)); if(!a) return; a.status='Cancelled'; addToHistory('Cancelled','appointments',`#${id} ${a.customer}`); saveData(); updateAllTables(); generateScheduleGrid(); refreshDashboardForRange(); }
+
+function saveAppointment(e){ e.preventDefault(); const id = document.getElementById('appointmentId').value; const entry = { id: id ? String(id) : (window.crypto && window.crypto.randomUUID ? window.crypto.randomUUID() : String(Date.now() + Math.floor(Math.random()*1000))), customer: document.getElementById('appointmentCustomer').value.trim(), phone: document.getElementById('appointmentPhone').value.trim(), service: document.getElementById('appointmentService').value, barber: document.getElementById('appointmentBarber').value, date: document.getElementById('appointmentDate').value, time: document.getElementById('appointmentTime').value, status: id? document.getElementById('appointmentStatus').value : 'Confirmed' }; if(id){ const idx = data.appointments.findIndex(a=>String(a.id)===String(id)); if(idx>-1) data.appointments[idx]=entry; addToHistory('Edited','appointments',`#${entry.id} ${entry.customer}`); } else { data.appointments.push(entry); addToHistory('Added','appointments',`${entry.customer} on ${entry.date} ${entry.time}`); } saveData(); updateAllTables(); generateScheduleGrid(); refreshDashboardForRange(); closeModal('appointmentModal'); e.target.reset(); document.getElementById('appointmentModalTitle').textContent='New Appointment'; document.getElementById('appointmentStatusGroup').style.display='none'; }
+
+// ---------- Sales ----------
+function updateSaleAmount(){ const sel=document.getElementById('saleService'); const opt=sel.options[sel.selectedIndex]; const p=opt?Number(opt.getAttribute('data-price')||0):0; document.getElementById('saleAmount').value=p; }
+function saveSale(e){ e.preventDefault(); const id=document.getElementById('saleId').value; const s={ id: id?Number(id):Date.now(), date: new Date().toISOString(), customer: document.getElementById('saleCustomer').value, service: document.getElementById('saleService').value, barber: document.getElementById('saleBarber').value, amount: Number(document.getElementById('saleAmount').value), payment: document.getElementById('salePayment').value }; if(id){ const idx=data.sales.findIndex(x=>x.id===Number(id)); if(idx>-1) data.sales[idx]=s; addToHistory('Edited','sales',`#${s.id} ${s.customer}`); } else { data.sales.push(s); addToHistory('Added','sales',`${s.customer} - ${s.service}`); } saveData(); updateAllTables(); refreshDashboardForRange(); closeModal('saleModal'); e.target.reset(); }
+function editSale(id){ const s = data.sales.find(x=>String(x.id)===String(id)); if(!s) return; document.querySelector('#saleModal h3').textContent = 'Edit Sale'; document.getElementById('saleId').value = s.id; document.getElementById('saleCustomer').value = s.customer; document.getElementById('saleService').value = s.service; document.getElementById('saleBarber').value = s.barber; document.getElementById('saleAmount').value = s.amount; document.getElementById('salePayment').value = s.payment; openModal('saleModal'); }
+function deleteSale(id){ const idx = data.sales.findIndex(x=>x.id===id); if(idx<0) return; const s = data.sales[idx]; data.sales.splice(idx,1); addToHistory('Deleted','sales',`Sale: ${s.customer} - ${s.service}`); saveData(); updateAllTables(); refreshDashboardForRange(); }
+
+// ---------- Staff CRUD + Availability ----------
+function presetAvailabilityFromSchedule(s){ /* noop placeholder for compatibility */ }
+function editStaff(i){ const s = data.staff[i]; if(!s) return; document.querySelector('#staffModal h3').textContent = 'Edit Staff Member'; document.getElementById('staffIndex').value = i; document.getElementById('staffName').value = s.name; document.getElementById('staffRole').value = s.role; document.getElementById('staffPhone').value = s.phone; document.getElementById('staffEmail').value = s.email; document.getElementById('staffSchedulePreview').value = s.schedule||''; openModal('staffModal'); }
+function deleteStaff(i){ const s = data.staff[i]; if(!s) return; data.staff.splice(i,1); addToHistory('Deleted','staff',`Staff ${s.name}`); // also remove overrides for this barber
+  data.staffOverrides = (data.staffOverrides||[]).filter(o=>o.name!==s.name); saveData(); updateAllTables(); populateBarberSelects(); populateAvailabilityBarbers(); renderStaffAvailability(); }
+
+function saveStaff(e){ e.preventDefault(); const i = document.getElementById('staffIndex').value; const staffObj = { name: document.getElementById('staffName').value.trim(), role: document.getElementById('staffRole').value, phone: document.getElementById('staffPhone').value.trim(), email: document.getElementById('staffEmail').value.trim(), schedule: document.getElementById('staffSchedulePreview').value.trim(), status: 'Active' };
+  if(i){ data.staff[Number(i)] = staffObj; addToHistory('Edited','staff',staffObj.name); }
+  else { data.staff.push(staffObj); addToHistory('Added','staff',staffObj.name); }
+  // Add initial availability overrides based on date range + days
+  const sd = document.getElementById('initAvailStartDate').value; const ed = document.getElementById('initAvailEndDate').value || sd; const st = document.getElementById('initAvailStartTime').value || '09:00'; const et = document.getElementById('initAvailEndTime').value || '18:00'; const days = Array.from(document.querySelectorAll('#staffModal .dayChk:checked')).map(x=>x.value);
+  if(sd && ed && days.length){ const start = new Date(sd); const end = new Date(ed); for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){ const wd = d.toLocaleDateString('en-US',{weekday:'short'}); const map = {Sun:'Sun',Mon:'Mon',Tue:'Tue',Wed:'Wed',Thu:'Thu',Fri:'Fri',Sat:'Sat'}; if(days.includes(map[wd])){ ensureOverrides(); data.staffOverrides.push({ id: Date.now() + Math.random(), name: staffObj.name, date: d.toISOString().split('T')[0], start: st, end: et }); } }
+  }
+  saveData(); updateAllTables(); populateBarberSelects(); populateAvailabilityBarbers(); renderStaffAvailability(); closeModal('staffModal'); e.target.reset(); }
+
+function ensureOverrides(){ if(!Array.isArray(data.staffOverrides)) data.staffOverrides=[]; }
+function populateAvailabilityBarbers(){ const sel = document.getElementById('availabilityBarber'); if(!sel) return; sel.innerHTML = '<option value="">Select Barber</option>'; (data.staff||[]).filter(s=> /barber/i.test(s.role)).forEach(s=>{ const o=document.createElement('option'); o.value=s.name; o.textContent=s.name; sel.appendChild(o); }); }
+function openAvailabilityModal(dateStr){ populateAvailabilityBarbers(); document.getElementById('availabilityId').value=''; document.getElementById('availabilityDate').value = dateStr || new Date().toISOString().split('T')[0]; document.getElementById('availabilityStart').value='09:00'; document.getElementById('availabilityEnd').value='18:00'; document.querySelector('#availabilityModal h3').textContent='Add Barber Availability'; openModal('availabilityModal'); }
+function saveAvailability(e){ e.preventDefault(); const entry = { id: Date.now(), name: document.getElementById('availabilityBarber').value, date: document.getElementById('availabilityDate').value, start: document.getElementById('availabilityStart').value, end: document.getElementById('availabilityEnd').value }; ensureOverrides(); data.staffOverrides.push(entry); addToHistory('Added','staff',`Availability: ${entry.name} on ${entry.date} ${entry.start}-${entry.end}`); saveData(); renderStaffAvailability(); closeModal('availabilityModal'); e.target.reset(); }
+
+function renderStaffAvailability(){ const grid=document.getElementById('staffAvailabilityGrid'); grid.innerHTML=''; const mode=document.getElementById('staffAvailabilityRange').value; let dates=[]; if(mode==='week'){ const today=new Date(); const monday=new Date(today); monday.setDate(today.getDate()-today.getDay()+1); for(let i=0;i<7;i++){ const d=new Date(monday); d.setDate(monday.getDate()+i); dates.push(d); } } else { const s=new Date(document.getElementById('staffRangeStart').value); const e=new Date(document.getElementById('staffRangeEnd').value); if(!isFinite(s)||!isFinite(e)||s>e){ return; } const MAX=14; let i=0; let cur=new Date(s); while(cur<=e && i<MAX){ dates.push(new Date(cur)); cur.setDate(cur.getDate()+1); i++; } }
+  // Header row
+  const head=['Staff', ...dates.map(d=> d.toLocaleDateString('en-US',{weekday:'short', month:'short', day:'numeric'}))]; grid.style.gridTemplateColumns = `180px repeat(${dates.length}, 1fr)`; head.forEach((h,i)=>{ const div=document.createElement('div'); div.className='slot header'; div.textContent=h; grid.appendChild(div); });
+  // Rows
+  data.staff.forEach(st=>{ const nameCell=document.createElement('div'); nameCell.className='slot header name'; nameCell.textContent=st.name; grid.appendChild(nameCell); dates.forEach(d=>{ const dayAbbrev=d.toLocaleDateString('en-US',{weekday:'short'}); const ds = d.toISOString().split('T')[0]; const baseInfo = isWorkingDay(st.schedule||'',dayAbbrev); // Weekly schedule baseline
+      // Overrides for exact date
+      const ov = (data.staffOverrides||[]).filter(o=> o.name===st.name && o.date===ds).sort((a,b)=> a.start.localeCompare(b.start));
+      const cell=document.createElement('div'); cell.className='slot'; cell.setAttribute('data-date', ds); cell.setAttribute('data-barber', st.name);
+      if(ov.length){ cell.classList.add('available'); cell.innerHTML = ov.map(o=> `${o.start}-${o.end}`).join('<br/>'); }
+      else if(baseInfo){ cell.classList.add('available'); cell.textContent = `${to12h(baseInfo.start.h, baseInfo.start.m)} – ${to12h(baseInfo.end.h, baseInfo.end.m)}`; }
+      else { cell.classList.add('off'); cell.textContent='Off'; }
+      cell.onclick = ()=>{ populateAvailabilityBarbers(); document.getElementById('availabilityBarber').value=st.name; openAvailabilityModal(ds); };
+      grid.appendChild(cell);
+  }); });
+}
+
+function isWorkingDay(scheduleStr, dayAbbrev){ const order=['Sun','Mon','Tue','Wed','Thu','Fri','Sat']; if(!scheduleStr||!scheduleStr.includes(' ')) return null; const parts = scheduleStr.split(' '); const days = parts[0]; const times = parts[1]; const [startStr,endStr] = (times||'').split('-'); const start = parseAmPm(startStr||'9AM'); const end = parseAmPm(endStr||'6PM'); const [from,to] = days.split('-'); const fromIdx = order.indexOf(from); const toIdx = order.indexOf(to); let activeDays=[]; if(fromIdx>-1 && toIdx>-1){ activeDays = fromIdx<=toIdx ? order.slice(fromIdx,toIdx+1) : [...order.slice(fromIdx),...order.slice(0,toIdx+1)]; } return activeDays.includes(dayAbbrev)? {start,end} : null; }
+function parseAmPm(s){ const m = s.match(/(\d{1,2})(?::(\d{2}))?\s*(AM|PM)/i); if(!m) return {h:9,m:0}; let h = parseInt(m[1],10); const min = m[2]?parseInt(m[2],10):0; const ap=m[3].toUpperCase(); if(ap==='PM' && h<12) h+=12; if(ap==='AM' && h===12) h=0; return {h,m:min}; }
+
+// ---------- Generic helpers ----------
+function openModal(id){ document.getElementById(id).style.display='flex'; document.body.style.overflow='hidden'; }
+function closeModal(id){ document.getElementById(id).style.display='none'; document.body.style.overflow='auto'; }
+function addToHistory(action, section, details){ data.history.unshift({ timestamp:new Date().toISOString(), action, section, details, user:'admin' }); }
+
+// ---------- Inventory & Customers minimal handlers ----------
+function editInventory(i){ const it = data.inventory[i]; if(!it) return; document.querySelector('#inventoryModal h3').textContent = 'Edit Inventory Item'; document.getElementById('inventoryIndex').value = i; document.getElementById('inventoryName').value = it.name; document.getElementById('inventoryCategory').value = it.category; document.getElementById('inventoryQuantity').value = it.quantity; document.getElementById('inventoryMinStock').value = it.minStock; openModal('inventoryModal'); }
+function deleteInventory(i){ const it = data.inventory[i]; if(!it) return; data.inventory.splice(i,1); addToHistory('Deleted','inventory',`Item ${it.name}`); saveData(); updateAllTables(); }
+function saveInventory(e){ e.preventDefault(); const idx=document.getElementById('inventoryIndex').value; const it={ name:document.getElementById('inventoryName').value, category:document.getElementById('inventoryCategory').value, quantity:Number(document.getElementById('inventoryQuantity').value), minStock:Number(document.getElementById('inventoryMinStock').value) }; if(idx){ data.inventory[Number(idx)]=it; addToHistory('Edited','inventory',it.name); } else { data.inventory.push(it); addToHistory('Added','inventory',it.name); } saveData(); updateAllTables(); closeModal('inventoryModal'); e.target.reset(); }
+function editCustomer(i){ const c = data.customers[i]; if(!c) return; document.querySelector('#customerModal h3').textContent = 'Edit Customer'; document.getElementById('customerIndex').value = i; document.getElementById('customerName').value = c.name; document.getElementById('customerPhone').value = c.phone; document.getElementById('customerEmail').value = c.email || ''; document.getElementById('customerNotes').value = c.notes || ''; openModal('customerModal'); }
+function deleteCustomer(i){ const c = data.customers[i]; if(!c) return; data.customers.splice(i,1); addToHistory('Deleted','customers',`Customer ${c.name}`); saveData(); updateAllTables(); }
+function saveCustomer(e){ e.preventDefault(); const idx=document.getElementById('customerIndex').value; const c={ name:document.getElementById('customerName').value, phone:document.getElementById('customerPhone').value, email:document.getElementById('customerEmail').value, notes:document.getElementById('customerNotes').value, lastVisit:new Date().toISOString().slice(0,10), visits:1 }; if(idx){ data.customers[Number(idx)]=c; addToHistory('Edited','customers',c.name); } else { data.customers.push(c); addToHistory('Added','customers',c.name); } saveData(); updateAllTables(); closeModal('customerModal'); e.target.reset(); }
+
+// ---------- Sales Stats (demo) ----------
+function updateSalesStats(){ const now=new Date(); const todayStr = now.toISOString().split('T')[0]; const weekStart=new Date(now); weekStart.setDate(now.getDate()-now.getDay()); const monthStart=new Date(now.getFullYear(), now.getMonth(), 1); const sum = arr=>arr.reduce((a,b)=>a+(+b.amount||0),0); const todaySales=sum(data.sales.filter(s=> s.date.startsWith(todayStr))); const weekSales=sum(data.sales.filter(s=> new Date(s.date)>=weekStart)); const monthSales=sum(data.sales.filter(s=> new Date(s.date)>=monthStart)); document.getElementById('todaySales').textContent=todaySales; document.getElementById('weekSales').textContent=weekSales; document.getElementById('monthSales').textContent=monthSales; }
+
+// ---------- Init ----------
+function populateBarberSelects(){ const selects=[document.getElementById('appointmentBarber'), document.getElementById('saleBarber')]; selects.forEach(sel=>{ if(!sel) return; const v=sel.value; sel.innerHTML='<option value="">Select Barber</option>'; data.staff.filter(s=>/barber/i.test(s.role)).forEach(b=>{ const o=document.createElement('option'); o.value=b.name; o.textContent=b.name; sel.appendChild(o); }); if(v) sel.value=v; }); }
+function attachListeners(){ document.getElementById('globalRange').addEventListener('change', e=> setGlobalRange(e.target.value)); document.getElementById('applyRangeBtn').addEventListener('click', ()=>{ const s=document.getElementById('rangeStart').value; const e=document.getElementById('rangeEnd').value; rangeState.start = s? new Date(s):null; rangeState.end = e? new Date(e+'T23:59:59'):null; refreshDashboardForRange(); }); document.getElementById('historyFilter').addEventListener('change', updateHistoryTable); document.getElementById('staffAvailabilityRange').addEventListener('change', ()=>{ const mode=document.getElementById('staffAvailabilityRange').value; const s=document.getElementById('staffRangeStart'); const e=document.getElementById('staffRangeEnd'); const b=document.getElementById('applyStaffRange'); if(mode==='custom'){ s.style.display=e.style.display=b.style.display='inline-block'; } else { s.style.display=e.style.display=b.style.display='none'; } renderStaffAvailability(); }); document.getElementById('applyStaffRange').addEventListener('click', renderStaffAvailability); }
+
+function boot(){ loadData(); setGlobalRange('month'); populateBarberSelects(); populateBarberFilter(); updateWeekDisplay(); updateCharts(); updateSalesStats(); updateAllTables(); attachListeners(); renderStaffAvailability(); }
+
+document.addEventListener('DOMContentLoaded', boot);
+</script>
+</body>
+</html>
